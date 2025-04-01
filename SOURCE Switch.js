@@ -1,21 +1,21 @@
 (function() {
     'use strict';
 
-    // Определяем список источников: 
-    // 'cub' – Каб, 'tmdb' – TMDB, 'avia' – AVIAMOVI.
-    var sources = ['cub', 'tmdb', 'avia'];
+    // Задаем список источников: 'cub' (Каб), 'tmdb' и 'aviamovie'
+    var sources = ['cub', 'tmdb', 'aviamovie'];
 
-    // Логотипы для источников. Для простоты используем текст для "cub" и "tmdb", 
-    // а для "avia" вставляем изображение из внешнего файла.
+    // Определяем логотипы/иконки для каждого источника.
+    // Здесь для simplicity используем текст для 'cub' и 'tmdb',
+    // а для 'aviamovie' вставляем изображение из внешнего файла.
     var logos = {
         cub: '<div style="color: white; font-weight: bold;">Kab</div>',
         tmdb: '<div style="color: white; font-weight: bold;">TMDB</div>',
-        avia: '<img src="https://raw.githubusercontent.com/ARST113/M.S.I./refs/heads/main/AVIA.svg" alt="AVIAMOVI" style="max-height: 24px;">'
+        aviamovie: '<img src="https://raw.githubusercontent.com/ARST113/M.S.I./refs/heads/main/AVIA.svg" alt="AVIAMOVIE" style="max-height: 24px;">'
     };
 
-    // Функция для добавления кнопки переключателя в шапку
+    // Функция добавления кнопки переключения источников в шапку
     function addSourceSwitcher() {
-        // Получаем текущий источник из Storage или устанавливаем первый из списка
+        // Получаем текущий источник из хранилища Lampa.Storage или устанавливаем первый из списка
         var currentSource = Lampa.Storage.get('source') || sources[0];
         var currentIndex = sources.indexOf(currentSource);
         if (currentIndex === -1) {
@@ -24,14 +24,14 @@
             Lampa.Storage.set('source', currentSource);
         }
 
-        // Создаем элемент переключателя
+        // Создаем элемент кнопки-переключателя
         var switcher = $('<div>', {
             'class': 'head__action selector source-switcher',
             'style': 'margin-right: 10px; position: relative; cursor: pointer;',
-            'html': '<div class="source-logo" style="text-align:center;">' + logos[currentSource] + '</div>'
+            'html': '<div class="source-logo" style="text-align: center;">' + logos[currentSource] + '</div>'
         });
 
-        // Ищем контейнер для кнопок в шапке
+        // Определяем контейнер для кнопок в шапке
         var $header = $('.head__actions');
         if ($header.length === 0) {
             $header = $('.header__actions');
@@ -42,7 +42,7 @@
         }
         $header.prepend(switcher);
 
-        // Функция для обновления отображаемого логотипа – показывается логотип следующего источника
+        // Функция для обновления отображаемого логотипа для следующего источника
         function updateLogo() {
             var nextIndex = (currentIndex + 1) % sources.length;
             var nextLogo = logos[sources[nextIndex]] || sources[nextIndex].toUpperCase();
@@ -56,6 +56,7 @@
             var newSource = sources[currentIndex];
             Lampa.Storage.set('source', newSource);
             updateLogo();
+            // Вызываем перезагрузку активности с новым источником
             Lampa.Activity.replace({
                 source: newSource,
                 title: 'Lampa - ' + newSource.toUpperCase()
@@ -76,12 +77,12 @@
         }
     }
 
-    // (Необязательно) Добавляем описание плагина в Manifest, чтобы он отображался в списке плагинов
+    // (Опционально) Добавляем описание плагина в Manifest для отображения в списке плагинов
     var manifest = {
         type: 'other',
         version: '1.0.0',
         name: 'Source Switcher',
-        description: 'Переключает источники между Kab (cub), TMDB и AVIAMOVI (avia)',
+        description: 'Переключает источники между Kab (cub), TMDB и AVIAMOVIE (aviamovie)',
         author: 'YourName'
     };
     if (typeof Lampa !== 'undefined' && Lampa.Manifest) {
@@ -89,6 +90,6 @@
         Lampa.Manifest.plugins.push(manifest);
     }
 
-    // Запуск плагина
+    // Запускаем плагин
     initPlugin();
 })();
