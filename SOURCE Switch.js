@@ -1,62 +1,94 @@
-function main$2() {
-  // Добавляем новый источник «avia» в массив источников
-  var allSources = ['tmdb', 'cub', 'avia'];
-  
-  // Определяем логотипы для каждого источника. Для «avia» используем тег <img> с ссылкой на внешний SVG.
-  var logos = {
-    tmdb: "<svg width=\"161\" height=\"37\" viewBox=\"0 0 161 37\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\"> ... </svg>",
-    cub: "<svg width=\"110\" height=\"39\" viewBox=\"0 0 110 39\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\"> ... </svg>",
-    avia: "<img src=\"https://raw.githubusercontent.com/ARST113/M.S.I./refs/heads/main/AVIA.svg\" alt=\"AVIA\" style=\"max-height: 100%;\">",
-    // Если нужно добавить и другие источники, их можно добавить здесь.
-    TMDBs: "<svg width=\"161\" height=\"37\" viewBox=\"0 0 161 37\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\"> ... </svg>",
-    pub: "<svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> ... </svg>",
-    filmix: "<svg width=\"160\" height=\"48\" viewBox=\"0 0 160 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> ... </svg>"
-  };
+(function() {
+    'use strict';
 
-  // Если включены дополнительные настройки источников, они могут добавляться динамически
-  var sources = allSources.slice(0, 3); // здесь по умолчанию берём три источника: tmdb, cub и avia
+    // Функция, добавляющая кнопку-переключатель источников в шапку
+    function addSourceSwitcher() {
+        // Задаем список источников (имена должны совпадать с тем, как Lampa их обрабатывает)
+        var sources = ['cub', 'tmdb', 'avia'];
+        // Определяем логотипы для источников. Для avia используется внешний SVG
+        var logos = {
+            cub: '<svg width="110" height="39" viewBox="0 0 110 39" fill="currentColor" xmlns="http://www.w3.org/2000/svg">...Ваш SVG-код для Каб...</svg>',
+            tmdb: '<svg width="161" height="37" viewBox="0 0 161 37" fill="currentColor" xmlns="http://www.w3.org/2000/svg">...Ваш SVG-код для TMDB...</svg>',
+            avia: '<img src="https://raw.githubusercontent.com/ARST113/M.S.I./refs/heads/main/AVIA.svg" alt="AVIA" style="max-height: 24px;">'
+        };
 
-  // Получаем текущее выбранное значение источника из Storage
-  var currentSource = Lampa.Storage.get('source');
-  var currentSourceIndex = sources.indexOf(currentSource);
+        // Получаем текущий источник из Storage или устанавливаем первый по умолчанию
+        var currentSource = Lampa.Storage.get('source') || sources[0];
+        var currentIndex = sources.indexOf(currentSource);
+        if (currentIndex === -1) {
+            currentIndex = 0;
+            currentSource = sources[0];
+            Lampa.Storage.set('source', currentSource);
+        }
 
-  // Если текущий источник не найден, устанавливаем первое значение по умолчанию
-  if (currentSourceIndex === -1) {
-    currentSourceIndex = 0;
-    currentSource = sources[currentSourceIndex];
-    Lampa.Storage.set('source', currentSource);
-  }
+        // Создаем элемент кнопки-переключателя
+        var switcher = $('<div>', {
+            'class': 'head__action selector source-switch',
+            'style': 'position: relative; margin-right: 10px;',
+            'html': '<div class="source-logo" style="text-align: center;">' + logos[currentSource] + '</div>'
+        });
 
-  // Создаем новый div элемент для отображения переключателя источников в шапке
-  var sourceDiv = $('<div>', {
-    'class': 'head__action selector sources',
-    'style': 'position: relative;',
-    'html': "<div class=\"source-logo\" style=\"text-align: center;\"></div>"
-  });
+        // Определяем контейнер шапки: попробуйте сначала .head__actions, если его нет – .header__actions
+        var headerActions = $('.head__actions');
+        if (headerActions.length === 0) {
+            headerActions = $('.header__actions');
+        }
+        if (headerActions.length === 0) {
+            console.error("Контейнер шапки не найден");
+            return;
+        }
+        headerActions.prepend(switcher);
 
-  // Добавляем новый элемент первым дочерним элементом контейнера '.head__actions'
-  $('.head__actions').prepend(sourceDiv);
+        // Обновляем отображение логотипа для следующего источника
+        var nextIndex = (currentIndex + 1) % sources.length;
+        var nextLogo = logos[sources[nextIndex]];
+        switcher.find('.source-logo').html(nextLogo);
 
-  // Определяем следующий источник и его логотип для отображения под переключателем
-  var nextSourceIndex = (currentSourceIndex + 1) % sources.length;
-  var nextSourceLogo = logos[sources[nextSourceIndex]];
-  sourceDiv.find('.source-logo').html(nextSourceLogo);
+        // Обработчик события (в Lampa используется событие "hover:enter" вместо клика)
+        switcher.on('hover:enter', function() {
+            currentIndex = (currentIndex + 1) % sources.length;
+            var selectedSource = sources[currentIndex];
+            Lampa.Storage.set('source', selectedSource);
 
-  // Добавляем обработчик события для переключения источника при нажатии
-  sourceDiv.on('hover:enter', function () {
-    currentSourceIndex = (currentSourceIndex + 1) % sources.length;
-    var selectedSource = sources[currentSourceIndex];
-    // Сохраняем выбранный источник в Storage
-    Lampa.Storage.set('source', selectedSource);
+            // Обновляем логотип на кнопке для следующего источника
+            var nextLogo = logos[sources[(currentIndex + 1) % sources.length]];
+            switcher.find('.source-logo').html(nextLogo);
 
-    // Обновляем логотип для следующего источника
-    var nextLogo = logos[sources[(currentSourceIndex + 1) % sources.length]];
-    sourceDiv.find('.source-logo').html(nextLogo);
+            // Вызываем замену Activity для полноценного переключения источника
+            Lampa.Activity.replace({
+                source: selectedSource,
+                title: 'Lampa - ' + selectedSource.toUpperCase()
+            });
+        });
+    }
 
-    // Перезагружаем контент с новым источником, вызывая замену активности
-    Lampa.Activity.replace({
-      source: selectedSource,
-      title: Lampa.Lang.translate("title_main") + ' - ' + selectedSource.toUpperCase()
-    });
-  });
-}
+    // Инициализация плагина после готовности приложения
+    function initPlugin() {
+        if (window.appready) {
+            addSourceSwitcher();
+        } else {
+            Lampa.Listener.follow('app', function(e) {
+                if (e.type === 'ready') {
+                    addSourceSwitcher();
+                }
+            });
+        }
+    }
+
+    // Манифест плагина (опционально, для отображения в списке плагинов)
+    var manifest = {
+        type: "other",
+        version: "1.0",
+        author: "YourName",
+        name: "Source Switcher",
+        description: "Переключатель источников: Каб (cub), TMDB и AVIAMOVI (avia)"
+    };
+
+    if (typeof Lampa !== 'undefined' && Lampa.Manifest) {
+        Lampa.Manifest.plugins = Lampa.Manifest.plugins || [];
+        Lampa.Manifest.plugins.push(manifest);
+    }
+
+    // Запуск плагина
+    initPlugin();
+})();
