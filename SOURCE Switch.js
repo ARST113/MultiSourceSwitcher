@@ -1,21 +1,20 @@
 (function() {
     'use strict';
 
-    // Задаем список источников: 'cub' (Каб), 'tmdb' и 'aviamovie'
+    // Задаем список источников: 'cub' – Каб, 'tmdb' – TMDB, 'aviamovie' – AVIAMOVIE.
     var sources = ['cub', 'tmdb', 'aviamovie'];
 
-    // Определяем логотипы/иконки для каждого источника.
-    // Здесь для simplicity используем текст для 'cub' и 'tmdb',
-    // а для 'aviamovie' вставляем изображение из внешнего файла.
+    // Определяем логотипы для каждого источника.
+    // Для 'cub' и 'tmdb' используем простой текст, для 'aviamovie' – внешний SVG.
     var logos = {
         cub: '<div style="color: white; font-weight: bold;">Kab</div>',
         tmdb: '<div style="color: white; font-weight: bold;">TMDB</div>',
         aviamovie: '<img src="https://raw.githubusercontent.com/ARST113/M.S.I./refs/heads/main/AVIA.svg" alt="AVIAMOVIE" style="max-height: 24px;">'
     };
 
-    // Функция добавления кнопки переключения источников в шапку
+    // Функция добавления переключателя источников в шапку
     function addSourceSwitcher() {
-        // Получаем текущий источник из хранилища Lampa.Storage или устанавливаем первый из списка
+        // Получаем текущий источник из Storage или устанавливаем первый
         var currentSource = Lampa.Storage.get('source') || sources[0];
         var currentIndex = sources.indexOf(currentSource);
         if (currentIndex === -1) {
@@ -24,14 +23,14 @@
             Lampa.Storage.set('source', currentSource);
         }
 
-        // Создаем элемент кнопки-переключателя
+        // Создаем элемент переключателя
         var switcher = $('<div>', {
             'class': 'head__action selector source-switcher',
             'style': 'margin-right: 10px; position: relative; cursor: pointer;',
             'html': '<div class="source-logo" style="text-align: center;">' + logos[currentSource] + '</div>'
         });
 
-        // Определяем контейнер для кнопок в шапке
+        // Определяем контейнер шапки (в зависимости от сборки, это может быть .head__actions или .header__actions)
         var $header = $('.head__actions');
         if ($header.length === 0) {
             $header = $('.header__actions');
@@ -42,7 +41,7 @@
         }
         $header.prepend(switcher);
 
-        // Функция для обновления отображаемого логотипа для следующего источника
+        // Функция для обновления логотипа (показываем логотип следующего источника)
         function updateLogo() {
             var nextIndex = (currentIndex + 1) % sources.length;
             var nextLogo = logos[sources[nextIndex]] || sources[nextIndex].toUpperCase();
@@ -50,13 +49,18 @@
         }
         updateLogo();
 
-        // Обработчик события (в Lampa вместо клика используется событие "hover:enter")
+        // Обработчик события (в Lampa используется "hover:enter" вместо стандартного клика)
         switcher.on('hover:enter', function() {
             currentIndex = (currentIndex + 1) % sources.length;
             var newSource = sources[currentIndex];
             Lampa.Storage.set('source', newSource);
+
+            // Обновляем настройки (как в стандартном переключении)
+            Lampa.Settings.update();
+
             updateLogo();
-            // Вызываем перезагрузку активности с новым источником
+
+            // Вызываем замену Activity для полноценного обновления контента
             Lampa.Activity.replace({
                 source: newSource,
                 title: 'Lampa - ' + newSource.toUpperCase()
@@ -77,12 +81,12 @@
         }
     }
 
-    // (Опционально) Добавляем описание плагина в Manifest для отображения в списке плагинов
+    // Добавляем описание плагина в Manifest (опционально, для отображения в списке плагинов)
     var manifest = {
         type: 'other',
         version: '1.0.0',
-        name: 'Source Switcher',
-        description: 'Переключает источники между Kab (cub), TMDB и AVIAMOVIE (aviamovie)',
+        name: 'Source Switcher Extended',
+        description: 'Переключает источники между Kab (cub), TMDB и AVIAMOVIE (aviamovie), вызывая Lampa.Settings.update() для полной синхронизации.',
         author: 'YourName'
     };
     if (typeof Lampa !== 'undefined' && Lampa.Manifest) {
@@ -90,6 +94,6 @@
         Lampa.Manifest.plugins.push(manifest);
     }
 
-    // Запускаем плагин
+    // Запуск плагина
     initPlugin();
 })();
